@@ -75,3 +75,22 @@ interface TrendingCardProps {
   movie: TrendingMovie;
   index: number;
 }
+
+// Add these to your existing interfaces.d.ts file
+
+interface SavedMovie {
+  $id: string;
+  userId: string;
+  movieId: string;
+  title: string;
+  posterPath: string;
+  voteAverage: number;
+  releaseDate: string;
+  savedAt: string;
+}
+
+interface User {
+  $id: string;
+  name: string;
+  email: string;
+}

@@ -5,13 +5,17 @@ import {
   ActivityIndicator,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useState, useEffect } from "react";
 
 import { icons } from "@/constants/icons";
 import useFetch from "@/services/usefetch";
 import { fetchMovieDetails } from "@/services/api";
+import { saveMovie, unsaveMovie, isMovieSaved } from "@/services/appwrite";
+import { useAuth } from "@/contexts/auth-context";
 
 interface MovieInfoProps {
   label: string;
@@ -30,10 +34,50 @@ const MovieInfo = ({ label, value }: MovieInfoProps) => (
 const Details = () => {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+  const { isAuthenticated } = useAuth();
+  const [isSaved, setIsSaved] = useState(false);
+  const [isCheckingSaved, setIsCheckingSaved] = useState(true);
 
   const { data: movie, loading } = useFetch(() =>
     fetchMovieDetails(id as string)
   );
+
+  useEffect(() => {
+    const checkIfSaved = async () => {
+      if (movie?.id) {
+        setIsCheckingSaved(true);
+        const saved = await isMovieSaved(movie.id.toString());
+        setIsSaved(saved);
+        setIsCheckingSaved(false);
+      }
+    };
+
+    checkIfSaved();
+  }, [movie?.id]);
+
+  const handleSaveToggle = async () => {
+    if (!isAuthenticated) {
+      router.push("/auth/login");
+      return;
+    }
+
+    try {
+      if (isSaved) {
+        await unsaveMovie(movie?.id.toString() || "");
+        setIsSaved(false);
+        Alert.alert("Success", "Movie removed from your saved list");
+      } else {
+        if (movie) {
+          await saveMovie(movie);
+          setIsSaved(true);
+          Alert.alert("Success", "Movie saved to your list");
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling save:", error);
+      Alert.alert("Error", "Failed to update saved status");
+    }
+  };
 
   if (loading)
     return (
@@ -83,6 +127,29 @@ const Details = () => {
               ({movie?.vote_count} votes)
             </Text>
           </View>
+
+          <TouchableOpacity
+            className={`mt-4 flex-row items-center ${
+              isSaved ? "bg-red-600" : "bg-accent"
+            } px-4 py-2 rounded-lg`}
+            onPress={handleSaveToggle}
+            disabled={isCheckingSaved}
+          >
+            {isCheckingSaved ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Image
+                  source={icons.save}
+                  className="size-5 mr-2"
+                  tintColor="#fff"
+                />
+                <Text className="text-white font-semibold">
+                  {isSaved ? "Remove from Saved" : "Save Movie"}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
 
           <MovieInfo label="Overview" value={movie?.overview} />
           <MovieInfo
