@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+"use client"
+
+import { useState } from "react"
 import {
   View,
   Text,
@@ -9,54 +11,59 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-} from "react-native";
-import { useRouter, Link } from "expo-router";
-import { useAuth } from "@/contexts/auth-context";
-import { icons } from "@/constants/icons";
+} from "react-native"
+import { useRouter, Link } from "expo-router"
+import { useAuth } from "@/contexts/auth-context"
+import { icons } from "@/constants/icons"
 
 export default function Register() {
-  const router = useRouter();
-  const { register, isLoading } = useAuth();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const router = useRouter()
+  const { register, isLoading } = useAuth()
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
 
   const handleRegister = async () => {
+    // Clear previous errors
+    setError("")
+
+    // Validate inputs
     if (!name || !email || !password) {
-      setError("Please fill in all fields");
-      return;
+      setError("Please fill in all fields")
+      return
     }
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters");
-      return;
+      setError("Password must be at least 8 characters")
+      return
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address")
+      return
     }
 
     try {
-      setError("");
-      await register(email, password, name);
-      router.back();
-    } catch (error) {
-      setError("Registration failed. Please try again.");
-      console.error(error);
+      console.log("Attempting to register with:", { email, name }) // Don't log password
+      await register(email, password, name)
+      console.log("Registration successful")
+      router.back()
+    } catch (error: any) {
+      console.error("Registration failed:", error)
+      // The error alert is already shown in the auth context
+      // Just update the local error state for UI display
+      setError(error.message || "Registration failed. Please try again.")
     }
-  };
+  }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-primary"
-    >
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        keyboardShouldPersistTaps="handled"
-      >
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-primary">
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
         <View className="flex-1 px-8 pt-20">
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="absolute top-14 left-5 z-10"
-          >
+          <TouchableOpacity onPress={() => router.back()} className="absolute top-14 left-5 z-10">
             <Image source={icons.arrow} className="size-6" tintColor="#fff" />
           </TouchableOpacity>
 
@@ -133,5 +140,5 @@ export default function Register() {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
-  );
+  )
 }
