@@ -86,25 +86,42 @@ const Profile = () => {
     loadUserData();
   }, [isAuthenticated]);
 
-  const handleLogout = () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Logout",
-          onPress: async () => {
-            await logout();
-          },
-          style: "destructive",
-        },
-      ],
-      { cancelable: true }
-    );
+  const handleLogout = async () => {
+    // Alert.alert(
+    //   "Logout",
+    //   "Are you sure you want to logout?",
+    //   [
+    //     {
+    //       text: "Cancel",
+    //       style: "cancel",
+    //     },
+    //     {
+    //       text: "Logout",
+    //       onPress: async () => {
+    //         const success = await logout();
+    //         console.log("succes");
+
+    //         if (success) {
+    //           router.navigate('/')
+    //         } else {
+    //           Alert.alert("Logout Failed", "Please try again");
+    //         }
+    //       },
+    //       style: "destructive",
+    //     },
+    //   ],
+    //   { cancelable: true }
+    // );
+
+    console.log("log out clicked");
+    const success = await logout();
+    console.log("succes");
+
+    if (success) {
+      router.navigate("/");
+    } else {
+      Alert.alert("Logout Failed", "Please try again");
+    }
   };
 
   if (!isAuthenticated) {

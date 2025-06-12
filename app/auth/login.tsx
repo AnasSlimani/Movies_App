@@ -30,7 +30,8 @@ export default function Login() {
 
     try {
       setError("");
-      await login(email, password);
+      const loginResponse = await login(email, password);
+      console.log(loginResponse);
       router.back();
     } catch (error) {
       setError("Invalid email or password");

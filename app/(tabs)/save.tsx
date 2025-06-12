@@ -39,9 +39,7 @@ const SavedMovieCard = ({
         <TouchableOpacity className="flex-row flex-1">
           <Image
             source={{
-              uri: movie.posterPath
-                ? `https://image.tmdb.org/t/p/w500${movie.posterPath}`
-                : "https://placehold.co/600x400/1a1a1a/FFFFFF.png",
+              uri: movie.posterPath, // This is now already a full URL
             }}
             className="w-24 h-36"
             resizeMode="cover"

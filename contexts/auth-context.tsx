@@ -15,7 +15,7 @@ type AuthContextType = {
   isLoading: boolean
   isAuthenticated: boolean
   login: (email: string, password: string) => Promise<void>
-  logout: () => Promise<void>
+  logout: () => Promise<boolean>
   register: (email: string, password: string, name: string) => Promise<void>
 }
 
@@ -24,7 +24,7 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: true,
   isAuthenticated: false,
   login: async () => {},
-  logout: async () => {},
+  logout: async () => false,
   register: async () => {},
 })
 
@@ -99,19 +99,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }
 
-  const logoutUser = async () => {
-    try {
-      setIsLoading(true)
-      await logout()
-      setUser(null)
-    } catch (error) {
-      console.error("Logout error:", error)
-      // Even if logout fails, clear the local user state
-      setUser(null)
-    } finally {
-      setIsLoading(false)
-    }
+const logoutUser = async () => {
+  try {
+    setIsLoading(true);
+    await logout();
+    setUser(null); // Clear local state
+    return true
+    
+  } catch (error) {
+    console.error("Logout error:", error);
+    setUser(null); // Still clear local state even if error
+    return false;
+  } finally {
+    setIsLoading(false);
   }
+};
 
   return (
     <AuthContext.Provider

@@ -45,6 +45,7 @@ export const createAccount = async (email: string, password: string, name: strin
         {
           email,
           name,
+          password,
           createdAt: new Date().toISOString(),
         },
       )
@@ -66,7 +67,11 @@ export const createAccount = async (email: string, password: string, name: strin
 export const login = async (email: string, password: string) => {
   try {
     // FIXED: Use createEmailSession instead of createSession
-    return await account.createEmailPasswordSession(email, password)
+    const session = await account.createEmailPasswordSession(email, password)
+    if (session){
+      return session.$id
+    }
+    return "badr"
   } catch (error) {
     console.error("Error logging in:", error)
     throw error
@@ -75,12 +80,14 @@ export const login = async (email: string, password: string) => {
 
 export const logout = async () => {
   try {
-    return await account.deleteSession("current")
+    // Delete all sessions to be thorough
+    await account.deleteSession("current");
+    return true;
   } catch (error) {
-    console.error("Error logging out:", error)
-    throw error
+    console.error("Error logging out:", error);
+    return false;
   }
-}
+};
 
 // Improved getCurrentUser function with better error handling
 export const getCurrentUser = async () => {
@@ -145,37 +152,51 @@ export const getTrendingMovies = async () => {
 }
 
 // Saved movies functions
-export const saveMovie = async (movie: any) => {
+export const saveMovie = async (movie: MovieDetails) => {
   try {
-    const user = await getCurrentUser()
-    if (!user) throw new Error("User not authenticated")
+    const user = await getCurrentUser();
+    if (!user) throw new Error("User not authenticated");
 
     // Check if movie is already saved
-    const existingMovie = await database.listDocuments(DATABASE_ID, SAVED_MOVIES_COLLECTION_ID, [
-      Query.equal("userId", user.$id),
-      Query.equal("movieId", movie.id.toString()),
-    ])
+    const existingMovie = await database.listDocuments(
+      DATABASE_ID,
+      SAVED_MOVIES_COLLECTION_ID,
+      [
+        Query.equal("userId", user.$id),
+        Query.equal("movieId", movie.id.toString()),
+      ]
+    );
 
     if (existingMovie.documents.length > 0) {
       // Movie already saved
-      return existingMovie.documents[0]
+      return existingMovie.documents[0];
     }
 
+    // Create the full poster URL
+    const fullPosterUrl = movie.poster_path 
+      ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+      : "https://placehold.co/600x400/1a1a1a/FFFFFF.png";
+
     // Save new movie
-    return await database.createDocument(DATABASE_ID, SAVED_MOVIES_COLLECTION_ID, ID.unique(), {
-      userId: user.$id,
-      movieId: movie.id.toString(),
-      title: movie.title,
-      posterPath: movie.poster_path,
-      voteAverage: movie.vote_average,
-      releaseDate: movie.release_date,
-      savedAt: new Date().toISOString(),
-    })
+    return await database.createDocument(
+      DATABASE_ID,
+      SAVED_MOVIES_COLLECTION_ID,
+      ID.unique(),
+      {
+        userId: user.$id,
+        movieId: movie.id.toString(),
+        title: movie.title,
+        posterPath: fullPosterUrl,
+        voteAverage: Math.round(movie.vote_average), // Convert to integer
+        releaseDate: movie.release_date,
+        savedAt: new Date().toISOString(),
+      }
+    );
   } catch (error) {
-    console.error("Error saving movie:", error)
-    throw error
+    console.error("Error saving movie:", error);
+    throw error;
   }
-}
+};
 
 export const unsaveMovie = async (movieId: string) => {
   try {

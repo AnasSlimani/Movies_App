@@ -50,7 +50,7 @@ export default function Register() {
       console.log("Attempting to register with:", { email, name }) // Don't log password
       await register(email, password, name)
       console.log("Registration successful")
-      router.back()
+      router.navigate("/");
     } catch (error: any) {
       console.error("Registration failed:", error)
       // The error alert is already shown in the auth context
